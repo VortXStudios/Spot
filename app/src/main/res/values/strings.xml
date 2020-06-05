@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">My Spoti</string>
+    <string name="direct"> > </string>
+    <string name="get_song"> Get song </string>
+    <string name="desc1"> Play/Pause </string>
+    <string name="desc2"> Stop </string>
+    <string name="desc3"> Forward </string>
+    <string name="desc4"> Backward </string>
+    <string name="empty">  </string>
+    <string name="timer"> 00:00 </string>
+    <string name="online"> Online </string>
+    <string name="offline"> Offline </string>
+    <string name="app_image"> app image </string>
+    <string name="refresh"> refresh artist list </string>
+    <string name="settings"> set ip and port </string>
+    <string name="play"> Play </string>
+    <string name="download"> download </string>
+    <string name="ip"> IP </string>
+    <string name="port"> Port </string>
+    <string name="rec_ip"> 198.168.25.1 </string>
+    <string name="rec_port"> 5000 </string>
+    <string name="image"> album cover </string>
+</resources>

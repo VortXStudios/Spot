@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <EditText
+        android:id="@+id/input_ip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ip"
+        android:autofillHints="@string/rec_ip"
+        android:inputType="textPersonName" />
+
+    <EditText
+        android:id="@+id/input_port"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/input_ip"
+        android:layout_alignParentStart="true"
+        android:hint="@string/port"
+        android:autofillHints="@string/rec_port"
+        android:inputType="textPersonName" />
+
+
+</RelativeLayout>

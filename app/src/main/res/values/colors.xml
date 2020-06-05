@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#60B53F</color>
+    <color name="colorPrimaryDark">#309F46</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="black">#070707</color>
+    <color name="hover">#95FF00</color>
+    <color name="selected">#D8FB01</color>
+</resources>

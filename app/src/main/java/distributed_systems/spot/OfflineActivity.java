@@ -1,7 +1,10 @@
 package distributed_systems.spot;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -275,45 +278,46 @@ public class OfflineActivity extends AppCompatActivity {
             requestSocket = null;
             out = null;
             in = null;
-            try {
-                this.setIp((String) params[0].take());
-                this.setPort(Integer.parseInt((String) params[0].take()));
-                requestSocket = new Socket(ip, port);
-                out = new ObjectOutputStream(requestSocket.getOutputStream());
-                in = new ObjectInputStream(requestSocket.getInputStream());
-                Log.e("check", "connected");
-                out.writeObject("Consumer");
-                out.flush();
-                while (true) {
-                    out.writeObject(stage);
-                    if (stage.equalsIgnoreCase("init")) {
-                        inState = 0;
-                        out.writeObject("Wake up");
-                        out.flush();
-                        Log.e("check", "send1");
-                        info = (Info) in.readObject();
-                        Log.e("check", "take info");
-                        while(info==null){
-                            if (isCancelled() || isExit) {
-                                Log.e("check", "cancel 1");
-                                inState = -1;
+            if(isNetworkAvailable()) {
+                try {
+                    this.setIp((String) params[0].take());
+                    this.setPort(Integer.parseInt((String) params[0].take()));
+                    requestSocket = new Socket(ip, port);
+                    out = new ObjectOutputStream(requestSocket.getOutputStream());
+                    in = new ObjectInputStream(requestSocket.getInputStream());
+                    Log.e("check", "connected");
+                    out.writeObject("Consumer");
+                    out.flush();
+                    while (true) {
+                        out.writeObject(stage);
+                        if (stage.equalsIgnoreCase("init")) {
+                            inState = 0;
+                            out.writeObject("Wake up");
+                            out.flush();
+                            Log.e("check", "send1");
+                            info = (Info) in.readObject();
+                            Log.e("check", "take info");
+                            while (info == null) {
+                                if (isCancelled() || isExit) {
+                                    Log.e("check", "cancel 1");
+                                    inState = -1;
+                                    break;
+                                }
+                                out.writeObject(null);
+                                out.flush();
+                                info = (Info) in.readObject();
+                            }
+                            if (inState == -1) {
+                                out.writeObject("exit");
+                                out.flush();
                                 break;
                             }
-                            out.writeObject(null);
+                            out.writeObject("ok");
                             out.flush();
-                            info = (Info) in.readObject();
-                        }
-                        if(inState==-1){
-                            out.writeObject("exit");
-                            out.flush();
-                            break;
-                        }
-                        out.writeObject("ok");
-                        out.flush();
-                        for (ArtistName a : info.getListOfBrokersInfo().keySet()) {
-                            Log.e("Artists in Info", a.getArtistName());
-                        }
-                        publishProgress(info, 0);
+                            for (ArtistName a : info.getListOfBrokersInfo().keySet()) {
+                                Log.e("Artists in Info", a.getArtistName());
+                            }
+                            publishProgress(info, 0);
                 /*
                 synchronized(this){
                     while(!notified){
@@ -326,59 +330,59 @@ public class OfflineActivity extends AppCompatActivity {
                 hasChoose = false;
                 */
 
-                        artist = (String) params[0].take();
-                        if (isCancelled() || isExit) {
-                            Log.e("check", "cancel 0");
-                            inState = 1;
-                            out.writeObject("exit");
-                            out.flush();
-                            break;
-                        }
-                    } else if (stage.equalsIgnoreCase("artist")) {
-                        ArtistName artistName = new ArtistName(artist);
-                        Log.e("check", "continue");
-                        String[] cb = findCorrespondingBroker(artistName, info);
-                        List<String> broker = register(cb, artistName);
-                        stage = "song";
-                        Log.e("check", "continue2");
-                        if (broker != null) {
-                            if (!(broker.get(0).equalsIgnoreCase("this"))) {
-                                out.writeObject("You are not my comrade");
-                                out.flush();
-                                disconnect(requestSocket, in, out);
-                                requestSocket = new Socket(broker.get(1), Integer.parseInt(broker.get(2)));
-                                out = new ObjectOutputStream(requestSocket.getOutputStream());
-                                in = new ObjectInputStream(requestSocket.getInputStream());
-                                out.writeObject("Consumer");
-                                out.flush();
-                                System.out.println("Success to change and connected to " + broker.get(0));
-                                out.writeObject("Already up");
-                                out.flush();
-                            }
-
-                            out.writeObject("Register");
-                            out.flush();
-                            //get a specific identification for this client
-                            out.writeObject("Consumer");
-                            out.flush();
+                            artist = (String) params[0].take();
                             if (isCancelled() || isExit) {
-                                Log.e("check", "cancel 1");
-                                inState = 2;
-                                out.writeObject(null);
+                                Log.e("check", "cancel 0");
+                                inState = 1;
+                                out.writeObject("exit");
                                 out.flush();
                                 break;
                             }
-                            out.writeObject(artistName);
-                            out.flush();
-                            List<String> allSongs = (ArrayList<String>) in.readObject();
-                            if (allSongs == null) {
-                                Log.e("check", "here");
-                                stage = "init";
-                                continue;
-                            }
-                            if (flag != 2) {
-                                publishProgress(allSongs, 1);
-                            }
+                        } else if (stage.equalsIgnoreCase("artist")) {
+                            ArtistName artistName = new ArtistName(artist);
+                            Log.e("check", "continue");
+                            String[] cb = findCorrespondingBroker(artistName, info);
+                            List<String> broker = register(cb, artistName);
+                            stage = "song";
+                            Log.e("check", "continue2");
+                            if (broker != null) {
+                                if (!(broker.get(0).equalsIgnoreCase("this"))) {
+                                    out.writeObject("You are not my comrade");
+                                    out.flush();
+                                    disconnect(requestSocket, in, out);
+                                    requestSocket = new Socket(broker.get(1), Integer.parseInt(broker.get(2)));
+                                    out = new ObjectOutputStream(requestSocket.getOutputStream());
+                                    in = new ObjectInputStream(requestSocket.getInputStream());
+                                    out.writeObject("Consumer");
+                                    out.flush();
+                                    System.out.println("Success to change and connected to " + broker.get(0));
+                                    out.writeObject("Already up");
+                                    out.flush();
+                                }
+
+                                out.writeObject("Register");
+                                out.flush();
+                                //get a specific identification for this client
+                                out.writeObject("Consumer");
+                                out.flush();
+                                if (isCancelled() || isExit) {
+                                    Log.e("check", "cancel 1");
+                                    inState = 2;
+                                    out.writeObject(null);
+                                    out.flush();
+                                    break;
+                                }
+                                out.writeObject(artistName);
+                                out.flush();
+                                List<String> allSongs = (ArrayList<String>) in.readObject();
+                                if (allSongs == null) {
+                                    Log.e("check", "here");
+                                    stage = "init";
+                                    continue;
+                                }
+                                if (flag != 2) {
+                                    publishProgress(allSongs, 1);
+                                }
                             /*
                     synchronized(this){
                         while(!notified){
@@ -390,118 +394,122 @@ public class OfflineActivity extends AppCompatActivity {
                      }
                     hasChoose = false;
                     */
-                            song = (String) params[0].take();
-                            if (isCancelled() || isExit) {
-                                Log.e("check", "cancel 2");
-                                inState = 3;
-                                out.writeObject("exit");
-                                out.flush();
-                                break;
-                            }
-                            if (stage.equalsIgnoreCase("artist")) {
-                                artist = song;
-                            }
+                                song = (String) params[0].take();
+                                if (isCancelled() || isExit) {
+                                    Log.e("check", "cancel 2");
+                                    inState = 3;
+                                    out.writeObject("exit");
+                                    out.flush();
+                                    break;
+                                }
+                                if (stage.equalsIgnoreCase("artist")) {
+                                    artist = song;
+                                }
 
-                        } else {
-                            stage = "init";
-                        }
-                    } else if (stage.equalsIgnoreCase("song")) {
-                        boolean fstop = false;
-                        out.writeObject(song);
-                        out.flush();
-                        Value v = (Value) in.readObject();
-                        stage="chunks";
-                        out.writeObject("ok");
-                        out.flush();
-                        if (v.getFailure()) {
-                            String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
-                            Toast.makeText(OfflineActivity.this,m,Toast.LENGTH_SHORT).show();
-                        }
+                            } else {
+                                stage = "init";
+                            }
+                        } else if (stage.equalsIgnoreCase("song")) {
+                            boolean fstop = false;
+                            out.writeObject(song);
+                            out.flush();
+                            Value v = (Value) in.readObject();
+                            stage = "chunks";
+                            out.writeObject("ok");
+                            out.flush();
+                            if (v.getFailure()) {
+                                String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
+                                Toast.makeText(OfflineActivity.this, m, Toast.LENGTH_SHORT).show();
+                            }
                         /*TODO ISWS NA SKAEI PRIN STEILEI OLA TA CHUNKS AMA PX EXW EPILEKSEI ENA NEO SONG NA PARW
                             H ENA NEO ARTIST AYTO THA GINETAI ME TO NA STELNEI MYNHMA KATALHLO STON BROKER px STOP kai ekeinos tha kleinei
                             sundesh me publisher
                          */
-                        else {
-                            publishProgress(null,3);
-                            allTracks.add(v);
-                            while (true) {
-                                v = (Value) in.readObject();
-                                System.out.println(v);
-                                //System.out.println(v.getFailure());
-                                if (v == null) {
-                                    out.writeObject("ok");
-                                    break;
-                                }
-
-                                if(!stage.equalsIgnoreCase("chunks")){
-                                    out.writeObject("stop");
-                                    fstop=true;
-                                    break;
-                                }
-                                out.writeObject("ok");
+                            else {
+                                publishProgress(null, 3);
                                 allTracks.add(v);
+                                while (true) {
+                                    v = (Value) in.readObject();
+                                    System.out.println(v);
+                                    //System.out.println(v.getFailure());
+                                    if (v == null) {
+                                        out.writeObject("ok");
+                                        break;
+                                    }
+
+                                    if (!stage.equalsIgnoreCase("chunks")) {
+                                        out.writeObject("stop");
+                                        fstop = true;
+                                        break;
+                                    }
+                                    out.writeObject("ok");
+                                    allTracks.add(v);
+                                }
                             }
-                        }
-                        publishProgress(null,4);
-                        if(!fstop) {
-                            if (isCancelled() || isExit) {
-                                Log.e("check", "cancel 3");
-                                inState = 4;
+                            publishProgress(null, 4);
+                            if (!fstop) {
+                                if (isCancelled() || isExit) {
+                                    Log.e("check", "cancel 3");
+                                    inState = 4;
+                                    out.writeObject("exit");
+                                    out.flush();
+                                    break;
+                                }
                                 out.writeObject("exit");
                                 out.flush();
                                 break;
-                            }
-                            out.writeObject("exit");
-                            out.flush();
-                            break;
-                        }
-                        else {
-                            Log.e("check", stage);
-                            Thread.sleep(3000);
-                            if (isCancelled() || isExit) {
-                                Log.e("check", "cancel 3.1");
-                                inState = 4;
-                                out.writeObject("exit");
+                            } else {
+                                Log.e("check", stage);
+                                Thread.sleep(3000);
+                                if (isCancelled() || isExit) {
+                                    Log.e("check", "cancel 3.1");
+                                    inState = 4;
+                                    out.writeObject("exit");
+                                    out.flush();
+                                    break;
+                                }
+                                if (stage.equalsIgnoreCase("chunks")) {
+                                    stage = "init";
+                                    flag = 0;
+                                } else if (stage.equalsIgnoreCase("song")) {
+                                    stage = "artist";
+                                    flag = 2;
+                                    //song = (String) params[0].get(0).poll();
+                                } else if (stage.equalsIgnoreCase("artist")) {
+                                    flag = 0;
+                                    artist = (String) params[0].poll();
+                                }
+                                out.writeObject("keep");
                                 out.flush();
-                                break;
+                                Log.e("check", stage);
                             }
-                            if (stage.equalsIgnoreCase("chunks")) {
-                                stage = "init";
-                                flag = 0;
-                            } else if (stage.equalsIgnoreCase("song")) {
-                                stage = "artist";
-                                flag = 2;
-                                //song = (String) params[0].get(0).poll();
-                            } else if (stage.equalsIgnoreCase("artist")) {
-                                flag = 0;
-                                artist = (String) params[0].poll();
-                            }
-                            out.writeObject("keep");
-                            out.flush();
-                            Log.e("check", stage);
                         }
                     }
-                }
-            }catch (UnknownHostException unknownHost) {
-                System.err.println("You are trying to connect to an unknown host!");
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                Log.e("check","finally async");
-                try {
-                    if(in!=null)
-                        in.close();
-                    if(out!=null)
-                        out.close();
-                    if(requestSocket!=null)
-                        requestSocket.close();
+                } catch (UnknownHostException unknownHost) {
+                    System.err.println("You are trying to connect to an unknown host!");
                 } catch (IOException ioException) {
                     ioException.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    Log.e("check", "finally async");
+                    try {
+                        if (in != null)
+                            in.close();
+                        if (out != null)
+                            out.close();
+                        if (requestSocket != null)
+                            requestSocket.close();
+                    } catch (IOException ioException) {
+                        ioException.printStackTrace();
+                    }
                 }
+            }
+            else{
+                publishProgress(null,-1);
+                return null;
             }
             if(!allTracks.isEmpty()){
                 publishProgress(null,5);
@@ -573,6 +581,9 @@ public class OfflineActivity extends AppCompatActivity {
                 if(progressDialog!=null) {
                     progressDialog.dismiss();
                 }
+            }
+            if(flag==-1){
+                Toast.makeText(OfflineActivity.this,"Not internet connection", Toast.LENGTH_LONG).show();
             }
                 /*while(true){
                     if(hasChoose)
@@ -674,6 +685,12 @@ public class OfflineActivity extends AppCompatActivity {
             this.port = p;
         }
 
+        private boolean isNetworkAvailable() {
+            ConnectivityManager connectivityManager
+                    = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null;
+        }
 
     }
 

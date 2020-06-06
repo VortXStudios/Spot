@@ -20,4 +20,6 @@
     <string name="rec_ip"> 198.168.25.1 </string>
     <string name="rec_port"> 5000 </string>
     <string name="image"> album cover </string>
+    <string name="search1"> Search artist </string>
+    <string name="search2"> Search song </string>
 </resources>

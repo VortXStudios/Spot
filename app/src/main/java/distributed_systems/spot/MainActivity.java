@@ -172,6 +172,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
+                    inputQueue.clear();
+                    viewSongs.setVisibility(View.INVISIBLE);
+                    btn2.setClickable(false);
+                    btn2.setVisibility(View.INVISIBLE);
+                    disablePlayerUI();
                     inputQueue.put("");
                     stage = "init";
                     inputQueue.clear();
@@ -390,6 +395,7 @@ public class MainActivity extends AppCompatActivity {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 stopPlaying();
             }
         });
@@ -808,7 +814,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("check", "send1");
                             info = (Info) in.readObject();
                             Log.e("check", "take info");
-                            while (info == null) {
+                            while (info.getListOfBrokersInfo().keySet().isEmpty()) {
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 1");
                                     inState = -1;
@@ -975,9 +981,13 @@ public class MainActivity extends AppCompatActivity {
                                         break;
                                     }
                                     if (!stage.equalsIgnoreCase("chunks")) {
+                                        //stopPlaying();
                                         break;
                                     }
                                 }
+                            }
+                            else{
+                                stopPlaying();
                             }
                             if (isCancelled() || isExit) {
                                 Log.e("check", "cancel 3.1");
@@ -993,14 +1003,17 @@ public class MainActivity extends AppCompatActivity {
                             if (stage.equalsIgnoreCase("chunks")) {
                                 stage = "init";
                                 flag = 0;
-                                publishProgress(null, 3);
-                                Thread.sleep(3000);
+                                publishProgress(null, 2);
+                                publishProgress(null,3);
+                                Thread.sleep(100);
                             } else if (stage.equalsIgnoreCase("song")) {
                                 stage = "artist";
                                 flag = 2;
                                 //song = (String) params[0].get(0).poll();
                             } else if (stage.equalsIgnoreCase("artist")) {
                                 flag = 0;
+                                publishProgress(null, 2);
+                                publishProgress(null,3);
                                 artist = (String) params[0].get(0).poll();
                             }
                             out.writeObject("keep");
@@ -1092,6 +1105,11 @@ public class MainActivity extends AppCompatActivity {
             }
             if(flag==-1){
                 Toast.makeText(MainActivity.this,"Not internet connection", Toast.LENGTH_LONG).show();
+            }
+            if(flag==3){
+                viewSongs.setVisibility(View.INVISIBLE);
+                btn2.setClickable(false);
+                btn2.setVisibility(View.INVISIBLE);
             }
                 /*while(true){
                     if(hasChoose)

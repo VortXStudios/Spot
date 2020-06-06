@@ -8,6 +8,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -49,6 +51,10 @@ public class OfflineActivity extends AppCompatActivity {
     private String stage;
     private List<Value> allTracks;
     private String track;
+    private SearchView searchArtist;
+    private SearchView searchSong;
+    //private ArrayAdapter adapterArtist;
+    //private ArrayAdapter adapterSong;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +65,8 @@ public class OfflineActivity extends AppCompatActivity {
         btn3 = (Button) findViewById(R.id.button4);
         viewArtists = (ListView) findViewById(R.id.listViewOffline1);
         viewSongs = (ListView) findViewById(R.id.listViewOffline2);
+        searchArtist = (SearchView) findViewById(R.id.searchArtist);
+        searchSong = (SearchView) findViewById(R.id.searchSong);
 
     }
     //TODO SET VISIBLE AND CLICKABLE PLAYER BUTTONS AND UI AFTER USER CHOOSE A SONG
@@ -96,6 +104,31 @@ public class OfflineActivity extends AppCompatActivity {
 
             }
         });
+
+        searchArtist.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                ArrayAdapter adapterArtist = (ArrayAdapter) viewArtists.getAdapter();
+                adapterArtist.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                ArrayAdapter adapterArtist = (ArrayAdapter) viewArtists.getAdapter();
+                if (TextUtils.isEmpty(newText)) {
+                    adapterArtist.getFilter().filter(null);
+                } else {
+                    adapterArtist.getFilter().filter(newText);
+                }
+                return true;
+                //return false;
+            }
+        });
+
+
+
+
         //TODO CHECK THAT USER HAD SELECTED BEFORE PUSH BUTTON
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -126,6 +159,28 @@ public class OfflineActivity extends AppCompatActivity {
 
             }
         });
+
+        searchSong.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            ArrayAdapter adapterSong = (ArrayAdapter) viewSongs.getAdapter();
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                adapterSong.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (TextUtils.isEmpty(newText)) {
+                    adapterSong.getFilter().filter(null);
+                } else {
+                    adapterSong.getFilter().filter(newText);
+                }
+                return true;
+                //return false;
+            }
+        });
+
+
         btn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -297,7 +352,7 @@ public class OfflineActivity extends AppCompatActivity {
                             Log.e("check", "send1");
                             info = (Info) in.readObject();
                             Log.e("check", "take info");
-                            while (info == null) {
+                            while (info.getListOfBrokersInfo().keySet().isEmpty()) {
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 1");
                                     inState = -1;
@@ -543,8 +598,8 @@ public class OfflineActivity extends AppCompatActivity {
                     artists.add(a.getArtistName());
                 }
                 Log.e("check","onProgressUpdate0");
-                ArrayAdapter adapter = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, artists);
-                viewArtists.setAdapter(adapter);
+                ArrayAdapter adapterArtist = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, artists);
+                viewArtists.setAdapter(adapterArtist);
                 viewArtists.setVisibility(View.VISIBLE);
                 btn1.setClickable(true);
                 btn1.setVisibility(View.VISIBLE);
@@ -552,8 +607,8 @@ public class OfflineActivity extends AppCompatActivity {
             if (flag == 1) {
                 Log.e("check","onProgressUpdate1");
                 List<String> songs = (ArrayList<String>) text[0];
-                ArrayAdapter adapter = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, songs);
-                viewSongs.setAdapter(adapter);
+                ArrayAdapter adapterSong = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, songs);
+                viewSongs.setAdapter(adapterSong);
                 viewSongs.setVisibility(View.VISIBLE);
                 btn2.setClickable(true);
                 btn2.setVisibility(View.VISIBLE);

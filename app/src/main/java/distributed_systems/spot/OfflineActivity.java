@@ -84,6 +84,8 @@ public class OfflineActivity extends AppCompatActivity {
         btn1.setClickable(false);
         btn2.setClickable(false);
         btn3.setClickable(false);
+        searchArtist.setVisibility(View.INVISIBLE);
+        searchSong.setVisibility(View.INVISIBLE);
         stage = "init";
         //final BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
         inputQueue = new LinkedBlockingDeque<>();
@@ -589,6 +591,7 @@ public class OfflineActivity extends AppCompatActivity {
 
             int flag = (int) text[1];
             if (flag == 0) {
+                searchSong.setVisibility(View.INVISIBLE);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);
@@ -601,6 +604,7 @@ public class OfflineActivity extends AppCompatActivity {
                 ArrayAdapter adapterArtist = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, artists);
                 viewArtists.setAdapter(adapterArtist);
                 viewArtists.setVisibility(View.VISIBLE);
+                searchArtist.setVisibility(View.VISIBLE);
                 btn1.setClickable(true);
                 btn1.setVisibility(View.VISIBLE);
             }
@@ -610,6 +614,7 @@ public class OfflineActivity extends AppCompatActivity {
                 ArrayAdapter adapterSong = new ArrayAdapter<String>(OfflineActivity.this, R.layout.activity_listview, songs);
                 viewSongs.setAdapter(adapterSong);
                 viewSongs.setVisibility(View.VISIBLE);
+                searchSong.setVisibility(View.VISIBLE);
                 btn2.setClickable(true);
                 btn2.setVisibility(View.VISIBLE);
             }

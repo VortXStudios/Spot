@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -20,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isExit;
     private String stage;
     private ImageView cover;
+    private SearchView searchArtist;
+    private SearchView searchSong;
 
 
 
@@ -104,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         elapsedTime = (TextView) findViewById(R.id.textView2);
         remainedTime = (TextView) findViewById(R.id.textView3);
         cover = (ImageView) findViewById(R.id.imageView3);
+        searchArtist = (SearchView) findViewById(R.id.searchView3);
+        searchSong = (SearchView) findViewById(R.id.searchView4);
     }
     //TODO SET VISIBLE AND CLICKABLE PLAYER BUTTONS AND UI AFTER USER CHOOSE A SONG
     public void onStart() {
@@ -122,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
         btn1.setClickable(false);
         btn2.setClickable(false);
         disablePlayerUI();
+        searchArtist.setVisibility(View.INVISIBLE);
+        searchSong.setVisibility(View.INVISIBLE);
         stage = "init";
         //final BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
         inputQueue = new LinkedBlockingDeque<>();
@@ -168,6 +176,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        searchArtist.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                ArrayAdapter adapterArtist = (ArrayAdapter) viewArtists.getAdapter();
+                adapterArtist.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                ArrayAdapter adapterArtist = (ArrayAdapter) viewArtists.getAdapter();
+                if (TextUtils.isEmpty(newText)) {
+                    adapterArtist.getFilter().filter(null);
+                } else {
+                    adapterArtist.getFilter().filter(newText);
+                }
+                return true;
+                //return false;
+            }
+        });
+
         refresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -195,6 +224,27 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        searchSong.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            ArrayAdapter adapterSong = (ArrayAdapter) viewSongs.getAdapter();
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                adapterSong.getFilter().filter(query);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (TextUtils.isEmpty(newText)) {
+                    adapterSong.getFilter().filter(null);
+                } else {
+                    adapterSong.getFilter().filter(newText);
+                }
+                return true;
+                //return false;
+            }
+        });
+
         btn2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1074,6 +1124,7 @@ public class MainActivity extends AppCompatActivity {
 
             int flag = (int) text[1];
             if (flag == 0) {
+                searchSong.setVisibility(View.INVISIBLE);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);
@@ -1089,6 +1140,7 @@ public class MainActivity extends AppCompatActivity {
                 viewArtists.setVisibility(View.VISIBLE);
                 btn1.setClickable(true);
                 btn1.setVisibility(View.VISIBLE);
+                searchArtist.setVisibility(View.VISIBLE);
             }
             if (flag == 1) {
                 Log.e("check","onProgressUpdate1");
@@ -1096,6 +1148,7 @@ public class MainActivity extends AppCompatActivity {
                 ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.activity_listview, songs);
                 viewSongs.setAdapter(adapter);
                 viewSongs.setVisibility(View.VISIBLE);
+                searchSong.setVisibility(View.VISIBLE);
                 btn2.setClickable(true);
                 btn2.setVisibility(View.VISIBLE);
                 disablePlayerUI();
@@ -1107,6 +1160,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this,"Not internet connection", Toast.LENGTH_LONG).show();
             }
             if(flag==3){
+                searchSong.setVisibility(View.VISIBLE);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);

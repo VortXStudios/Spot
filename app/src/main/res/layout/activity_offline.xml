@@ -28,7 +28,7 @@
         android:id="@+id/listViewOffline2"
         android:layout_width="130dp"
         android:layout_height="418dp"
-        android:layout_marginBottom="15dp"
+        android:layout_marginBottom="25dp"
         android:layout_marginEnd="15dp"
         android:layout_marginStart="25dp"
         android:layout_marginTop="85dp"

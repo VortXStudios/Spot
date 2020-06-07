@@ -119,8 +119,8 @@ public class MainActivity extends AppCompatActivity {
         String ip = (String) getIntent().getStringExtra("ip");
         int port = (int) getIntent().getIntExtra("port",5000);
         //stopPlaying();
-        //mp = null;
-        //mpNext = null;
+        mp = null;
+        mpNext = null;
         allTracks = new ArrayList<>();
         allTracksDuration = new ArrayList<>();
         isExit = false;
@@ -1075,7 +1075,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                             else{
-                                stopPlaying();
+                                publishProgress(null,10);
                             }
                             if (isCancelled() || isExit) {
                                 Log.e("check", "cancel 3.1");
@@ -1103,6 +1103,7 @@ public class MainActivity extends AppCompatActivity {
                                 flag = 0;
                                 publishProgress(null, 2);
                                 publishProgress(null,3);
+                                publishProgress(null,10);
                                 artist = (String) params[0].get(0).poll();
                             }
                             out.writeObject("keep");
@@ -1213,12 +1214,15 @@ public class MainActivity extends AppCompatActivity {
             if(flag==-2){
                 progressDialog = ProgressDialog.show(MainActivity.this,
                         "Progress Dialog",
-                        "Waiting for a publisher...");
+                        "Waiting for a publisher to connect...");
             }
             if(flag==-3){
                 if(progressDialog!=null) {
                     progressDialog.dismiss();
                 }
+            }
+            if(flag==10){
+                stopPlaying();
             }
 
                 /*while(true){

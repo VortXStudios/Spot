@@ -87,6 +87,8 @@ public class OfflineActivity extends AppCompatActivity {
         btn3.setClickable(false);
         searchArtist.setVisibility(View.INVISIBLE);
         searchSong.setVisibility(View.INVISIBLE);
+        searchArtist.setClickable(false);
+        searchSong.setClickable(false);
         stage = "init";
         //final BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
         inputQueue = new LinkedBlockingDeque<>();
@@ -357,12 +359,20 @@ public class OfflineActivity extends AppCompatActivity {
                             Log.e("check", "send1");
                             info = (Info) in.readObject();
                             Log.e("check", "take info");
+                            boolean notPub = false;
+                            int count =0;
                             while (info.getListOfBrokersInfo().keySet().isEmpty()) {
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 1");
                                     inState = -1;
+                                    publishProgress(null,-3);
                                     break;
                                 }
+                                if(count==0) {
+                                    publishProgress(null, -2);
+                                }
+                                count++;
+                                notPub = true;
                                 out.writeObject(null);
                                 out.flush();
                                 info = (Info) in.readObject();
@@ -371,6 +381,9 @@ public class OfflineActivity extends AppCompatActivity {
                                 out.writeObject("exit");
                                 out.flush();
                                 break;
+                            }
+                            if(notPub){
+                                publishProgress(null,-3);
                             }
                             out.writeObject("ok");
                             out.flush();
@@ -520,7 +533,7 @@ public class OfflineActivity extends AppCompatActivity {
                                 break;
                             } else {
                                 Log.e("check", stage);
-                                Thread.sleep(3000);
+                                Thread.sleep(100);
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 3.1");
                                     inState = 4;
@@ -530,6 +543,7 @@ public class OfflineActivity extends AppCompatActivity {
                                 }
                                 if (stage.equalsIgnoreCase("chunks")) {
                                     stage = "init";
+                                    publishProgress(null,2);
                                     flag = 0;
                                 } else if (stage.equalsIgnoreCase("song")) {
                                     stage = "artist";
@@ -537,6 +551,7 @@ public class OfflineActivity extends AppCompatActivity {
                                     //song = (String) params[0].get(0).poll();
                                 } else if (stage.equalsIgnoreCase("artist")) {
                                     flag = 0;
+                                    publishProgress(null,2);
                                     artist = (String) params[0].poll();
                                 }
                                 out.writeObject("keep");
@@ -595,6 +610,7 @@ public class OfflineActivity extends AppCompatActivity {
             int flag = (int) text[1];
             if (flag == 0) {
                 searchSong.setVisibility(View.INVISIBLE);
+                searchSong.setClickable(false);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);
@@ -608,6 +624,7 @@ public class OfflineActivity extends AppCompatActivity {
                 viewArtists.setAdapter(adapterArtist);
                 viewArtists.setVisibility(View.VISIBLE);
                 searchArtist.setVisibility(View.VISIBLE);
+                searchArtist.setClickable(true);
                 btn1.setClickable(true);
                 btn1.setVisibility(View.VISIBLE);
             }
@@ -618,8 +635,16 @@ public class OfflineActivity extends AppCompatActivity {
                 viewSongs.setAdapter(adapterSong);
                 viewSongs.setVisibility(View.VISIBLE);
                 searchSong.setVisibility(View.VISIBLE);
+                searchSong.setClickable(true);
                 btn2.setClickable(true);
                 btn2.setVisibility(View.VISIBLE);
+            }
+            if(flag==2){
+                searchSong.setVisibility(View.INVISIBLE);
+                searchSong.setClickable(false);
+                viewSongs.setVisibility(View.INVISIBLE);
+                btn2.setClickable(false);
+                btn2.setVisibility(View.INVISIBLE);
             }
             if(flag == 3){
                 progressDialog = ProgressDialog.show(OfflineActivity.this,
@@ -647,6 +672,16 @@ public class OfflineActivity extends AppCompatActivity {
             }
             if(flag==-1){
                 Toast.makeText(OfflineActivity.this,"Not internet connection", Toast.LENGTH_LONG).show();
+            }
+            if(flag==-2){
+                progressDialog = ProgressDialog.show(OfflineActivity.this,
+                        "Progress Dialog",
+                        "Waiting for a publisher to connect...");
+            }
+            if(flag==-3){
+                if(progressDialog!=null) {
+                    progressDialog.dismiss();
+                }
             }
                 /*while(true){
                     if(hasChoose)

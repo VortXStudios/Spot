@@ -54,8 +54,7 @@ public class OfflineActivity extends AppCompatActivity {
     private String track;
     private SearchView searchArtist;
     private SearchView searchSong;
-    //private ArrayAdapter adapterArtist;
-    //private ArrayAdapter adapterSong;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +69,7 @@ public class OfflineActivity extends AppCompatActivity {
         searchSong = (SearchView) findViewById(R.id.searchSong);
 
     }
-    //TODO SET VISIBLE AND CLICKABLE PLAYER BUTTONS AND UI AFTER USER CHOOSE A SONG
+
     public void onStart() {
         super.onStart();
         String ip = (String) getIntent().getStringExtra("ip");
@@ -90,13 +89,11 @@ public class OfflineActivity extends AppCompatActivity {
         searchArtist.setClickable(false);
         searchSong.setClickable(false);
         stage = "init";
-        //final BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
         inputQueue = new LinkedBlockingDeque<>();
         inputQueue.add(ip);
         inputQueue.add(Integer.toString(port));
         runner = new AsyncTaskRunner();
         runner.execute(inputQueue);
-        //state = false;
         selectedArtist = null;
         selectedSong = null;
         viewArtists.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -104,7 +101,6 @@ public class OfflineActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long arg3) {
                 view.setSelected(true);
                 view.setActivated(true);
-                //viewArtists.setItemChecked(position, true);
                 selectedArtist = (String) (viewArtists.getItemAtPosition(position));
 
             }
@@ -127,18 +123,18 @@ public class OfflineActivity extends AppCompatActivity {
                     adapterArtist.getFilter().filter(newText);
                 }
                 return true;
-                //return false;
+
             }
         });
 
 
 
 
-        //TODO CHECK THAT USER HAD SELECTED BEFORE PUSH BUTTON
+
         btn1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //hasChoose = true;
+
                 inputQueue.clear();
                 allTracks.clear();
                 if (selectedArtist != null) {
@@ -181,7 +177,7 @@ public class OfflineActivity extends AppCompatActivity {
                     adapterSong.getFilter().filter(newText);
                 }
                 return true;
-                //return false;
+
             }
         });
 
@@ -192,7 +188,7 @@ public class OfflineActivity extends AppCompatActivity {
                 if (selectedSong != null) {
                     allTracks.clear();
                     inputQueue.clear();
-                    //state=false;
+
                     try {
                         inputQueue.put(selectedSong);
                         stage = "song";
@@ -266,19 +262,12 @@ public class OfflineActivity extends AppCompatActivity {
         mergedValue = new Value();
         mergedValue.setMusicFile(mergedM);
         String fileName = m.getArtistName() + "-" + m.getTrackName() + ".mp3";
-        //String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/saved songs/";
-        //String path = getApplicationContext().getFilesDir().getAbsolutePath()+"/saved songs/";
-        //File file = new File(path);
-        //Log.e("path",path);
-        //if(!file.exists()){
-        //    boolean jet = file.mkdir();
-        //}
+
         try {
             String filepath = "/saved songs/";
             File path = getExternalFilesDir(filepath);
             Log.e("path",path.getAbsolutePath());
             File of = new File(getExternalFilesDir(filepath), fileName);
-            //File of = new File(file, fileName);
             outstream = new FileOutputStream(of);
             outstream.write(reader);
             name = fileName;
@@ -334,7 +323,6 @@ public class OfflineActivity extends AppCompatActivity {
             Info info = null;
             String song = null;
             int flag=0;
-            //int counter=0;
             notified = false;
             requestSocket = null;
             out = null;
@@ -392,17 +380,7 @@ public class OfflineActivity extends AppCompatActivity {
                                 Log.e("Artists in Info", a.getArtistName());
                             }
                             publishProgress(info, 0);
-                /*
-                synchronized(this){
-                    while(!notified){
-                        try{
-                            this.wait();
-                        }
-                        catch(InterruptedException e){ }
-                    }
-                }
-                hasChoose = false;
-                */
+
 
                             artist = (String) params[0].take();
                             if (isCancelled() || isExit) {
@@ -457,17 +435,7 @@ public class OfflineActivity extends AppCompatActivity {
                                 if (flag != 2) {
                                     publishProgress(allSongs, 1);
                                 }
-                            /*
-                    synchronized(this){
-                        while(!notified){
-                            try{
-                                this.wait();
-                            }
-                            catch(InterruptedException e){ }
-                        }
-                     }
-                    hasChoose = false;
-                    */
+
                                 song = (String) params[0].take();
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 2");
@@ -497,17 +465,13 @@ public class OfflineActivity extends AppCompatActivity {
                                 stage = "init";
                                 fstop = true;
                             }
-                        /*TODO ISWS NA SKAEI PRIN STEILEI OLA TA CHUNKS AMA PX EXW EPILEKSEI ENA NEO SONG NA PARW
-                            H ENA NEO ARTIST AYTO THA GINETAI ME TO NA STELNEI MYNHMA KATALHLO STON BROKER px STOP kai ekeinos tha kleinei
-                            sundesh me publisher
-                         */
+
                             else {
                                 publishProgress(null, 3);
                                 allTracks.add(v);
                                 while (true) {
                                     v = (Value) in.readObject();
-                                    System.out.println(v);
-                                    //System.out.println(v.getFailure());
+                                    Log.e("Value",String.valueOf(v));
                                     if (v == null) {
                                         out.writeObject("ok");
                                         break;
@@ -552,7 +516,6 @@ public class OfflineActivity extends AppCompatActivity {
                                 } else if (stage.equalsIgnoreCase("song")) {
                                     stage = "artist";
                                     flag = 2;
-                                    //song = (String) params[0].get(0).poll();
                                 } else if (stage.equalsIgnoreCase("artist")) {
                                     flag = 0;
                                     publishProgress(null,2);
@@ -691,25 +654,19 @@ public class OfflineActivity extends AppCompatActivity {
                 String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
                 Toast.makeText(OfflineActivity.this, m, Toast.LENGTH_SHORT).show();
             }
-                /*while(true){
-                    if(hasChoose)
-                        break;
-                }
-                notified = true;
-                this.notify();
-            }*/
+
         }
 
 
 
         private void disconnect(Socket requestSocket, ObjectInputStream in, ObjectOutputStream out){
-            System.out.println("Closing this connection : " + requestSocket);
+            Log.e("disconnect","Closing this connection : " + requestSocket);
             if(requestSocket!=null) {
                 try {
                     requestSocket.close();
-                    System.out.println("Connection closed");
+                    Log.e("disconnect","Connection closed");
                 } catch (Exception e) {
-                    System.err.println("Failed to disconnect");
+                    Log.e("disconnect","Failed to disconnect");
                     e.printStackTrace();
                 }
             }
@@ -725,11 +682,11 @@ public class OfflineActivity extends AppCompatActivity {
         }
 
         private String[] findCorrespondingBroker(ArtistName artistName,Info info) {
-            //boolean isOK = false;
+
             String[] cb = null;
             for (ArtistName a : info.getListOfBrokersInfo().keySet()) {
                 if (a.getArtistName().equalsIgnoreCase(artistName.getArtistName())) {
-                    //isOK = true;
+
                     cb = info.getListOfBrokersInfo().get(a).clone();
                     break;
                 }
@@ -740,8 +697,6 @@ public class OfflineActivity extends AppCompatActivity {
         //method to register with the capable broker
         private List<String> register(String[] broker, ArtistName artistName){
             List<String> correctBroker = new ArrayList<>();
-            System.out.println(broker);
-            System.out.println(artistName);
             if(broker!=null && artistName!=null){
                 if((broker[1].equals(this.getIp())) && (Integer.parseInt(broker[2]) == this.getPort())){
                     setConnectedBroker(broker);
@@ -759,7 +714,7 @@ public class OfflineActivity extends AppCompatActivity {
                 }
             }
             else {
-                System.out.println("Null broker or artist name");
+                Log.e("register","Null broker or artist name");
                 return null;
             }
 

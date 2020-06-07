@@ -40,7 +40,6 @@ public class MediaPlayerOfflineActivity extends AppCompatActivity {
     private MediaPlayer mp;
     private boolean initialized;
     private Handler hdlr ;
-    //private int pass = 0;
     private  int oTime =0, sTime =0, eTime =0, fTime = 3000, bTime = 3000;
     private ImageView imageView;
     private String trackName;
@@ -210,7 +209,6 @@ public class MediaPlayerOfflineActivity extends AppCompatActivity {
             FileInputStream fis = new FileInputStream(new File(path));
             mp.setDataSource(fis.getFD());
             mp.prepare();
-            //mp.start();
             media = new MediaMetadataRetriever();
             media.setDataSource(fis.getFD());
             byte [] embeddedPicture = media.getEmbeddedPicture();

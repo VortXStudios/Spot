@@ -353,6 +353,7 @@ public class OfflineActivity extends AppCompatActivity {
                     while (true) {
                         out.writeObject(stage);
                         if (stage.equalsIgnoreCase("init")) {
+                            flag=0;
                             inState = 0;
                             out.writeObject("Wake up");
                             out.flush();
@@ -428,8 +429,8 @@ public class OfflineActivity extends AppCompatActivity {
                                     in = new ObjectInputStream(requestSocket.getInputStream());
                                     out.writeObject("Consumer");
                                     out.flush();
-                                    System.out.println("Success to change and connected to " + broker.get(0));
-                                    out.writeObject("Already up");
+                                    Log.e("Success to connect to ", broker.get(0));
+                                    out.writeObject(stage);
                                     out.flush();
                                 }
 
@@ -491,8 +492,10 @@ public class OfflineActivity extends AppCompatActivity {
                             out.writeObject("ok");
                             out.flush();
                             if (v.getFailure()) {
-                                String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
-                                Toast.makeText(OfflineActivity.this, m, Toast.LENGTH_SHORT).show();
+                                Log.e("check","failure");
+                                publishProgress(null,-5);
+                                stage = "init";
+                                fstop = true;
                             }
                         /*TODO ISWS NA SKAEI PRIN STEILEI OLA TA CHUNKS AMA PX EXW EPILEKSEI ENA NEO SONG NA PARW
                             H ENA NEO ARTIST AYTO THA GINETAI ME TO NA STELNEI MYNHMA KATALHLO STON BROKER px STOP kai ekeinos tha kleinei
@@ -528,6 +531,7 @@ public class OfflineActivity extends AppCompatActivity {
                                     out.flush();
                                     break;
                                 }
+                                Log.e("check", "leave");
                                 out.writeObject("exit");
                                 out.flush();
                                 break;
@@ -682,6 +686,10 @@ public class OfflineActivity extends AppCompatActivity {
                 if(progressDialog!=null) {
                     progressDialog.dismiss();
                 }
+            }
+            if(flag==-5){
+                String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
+                Toast.makeText(OfflineActivity.this, m, Toast.LENGTH_SHORT).show();
             }
                 /*while(true){
                     if(hasChoose)

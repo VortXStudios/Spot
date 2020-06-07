@@ -183,6 +183,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        searchArtist.setIconifiedByDefault(false);
+
         searchArtist.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -263,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(selectedSong!=null) {
                     //hasChoose = true;
+                    stage="song";
                     if (mp != null) {
                         try {
                             mp.release();
@@ -290,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                     //state=false;
                     try {
                         inputQueue.put(selectedSong);
-                        stage = "song";
+                        //stage = "song";
                         enablePlayerUI();
                         titleOfSong.setText(selectedSong);
                         selectedSong = null;
@@ -596,26 +599,29 @@ public class MainActivity extends AppCompatActivity {
     private Runnable UpdateSongTime = new Runnable() {
         @Override
         public void run() {
-            int sTime3 = 0;
-            if(playerNow==0) {
-                sTime = mp.getCurrentPosition();
-                sTime3 = sTime2 + mp.getCurrentPosition();
+            try {
+                int sTime3 = 0;
+                if (playerNow == 0) {
+                    sTime = mp.getCurrentPosition();
+                    sTime3 = sTime2 + mp.getCurrentPosition();
+                } else {
+                    sTime = mpNext.getCurrentPosition();
+                    sTime3 = sTime2 + mpNext.getCurrentPosition();
+                }
+                if (pass == 0) {
+                    elapsedTime.setText(String.format("%d:%02d ", TimeUnit.MILLISECONDS.toMinutes(sTime),
+                            TimeUnit.MILLISECONDS.toSeconds(sTime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(sTime))));
+                    songPrgs.setProgress(sTime);
+                } else {
+                    elapsedTime.setText(String.format("%d:%02d ", TimeUnit.MILLISECONDS.toMinutes(sTime3),
+                            TimeUnit.MILLISECONDS.toSeconds(sTime3) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(sTime3))));
+                    songPrgs.setProgress(sTime3);
+                }
+                hdlr.postDelayed(this, 100);
             }
-            else{
-                sTime = mpNext.getCurrentPosition();
-                sTime3 = sTime2 + mpNext.getCurrentPosition();
+            catch (Exception e){
+                e.printStackTrace();
             }
-            if(pass==0) {
-                elapsedTime.setText(String.format("%d:%02d ", TimeUnit.MILLISECONDS.toMinutes(sTime),
-                        TimeUnit.MILLISECONDS.toSeconds(sTime) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(sTime))) );
-                songPrgs.setProgress(sTime);
-            }
-            else{
-                elapsedTime.setText(String.format("%d:%02d ", TimeUnit.MILLISECONDS.toMinutes(sTime3),
-                        TimeUnit.MILLISECONDS.toSeconds(sTime3) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(sTime3))) );
-                songPrgs.setProgress(sTime3);
-            }
-            hdlr.postDelayed(this, 100);
         }
     };
 
@@ -883,6 +889,7 @@ public class MainActivity extends AppCompatActivity {
                     while (true) {
                         out.writeObject(stage);
                         if (stage.equalsIgnoreCase("init")) {
+                            flag=0;
                             inState = 0;
                             out.writeObject("Wake up");
                             out.flush();
@@ -946,7 +953,6 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("check", "continue");
                             String[] cb = findCorrespondingBroker(artistName, info);
                             List<String> broker = register(cb, artistName);
-                            stage = "song";
                             Log.e("check", "continue2");
                             if (broker != null) {
                                 if (!(broker.get(0).equalsIgnoreCase("this"))) {
@@ -958,11 +964,11 @@ public class MainActivity extends AppCompatActivity {
                                     in = new ObjectInputStream(requestSocket.getInputStream());
                                     out.writeObject("Consumer");
                                     out.flush();
-                                    System.out.println("Success to change and connected to " + broker.get(0));
-                                    out.writeObject("Already up");
+                                    Log.e("Success to connect to ", broker.get(0));
+                                    out.writeObject(stage);
                                     out.flush();
                                 }
-
+                                stage = "song";
                                 out.writeObject("Register");
                                 out.flush();
                                 //get a specific identification for this client
@@ -1021,10 +1027,10 @@ public class MainActivity extends AppCompatActivity {
                             out.writeObject("ok");
                             out.flush();
                             if (v.getFailure()) {
-                                String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
-                                Toast.makeText(MainActivity.this, m, Toast.LENGTH_SHORT).show();
-                                mp = null;
-                                mpNext = null;
+                                Log.e("check","failure");
+                                publishProgress(null,-5);
+                                fstop = true;
+                                stage = "init";
                             }
                         /*TODO ISWS NA SKAEI PRIN STEILEI OLA TA CHUNKS AMA PX EXW EPILEKSEI ENA NEO SONG NA PARW
                             H ENA NEO ARTIST AYTO THA GINETAI ME TO NA STELNEI MYNHMA KATALHLO STON BROKER px STOP kai ekeinos tha kleinei
@@ -1106,6 +1112,7 @@ public class MainActivity extends AppCompatActivity {
                                 publishProgress(null,10);
                                 artist = (String) params[0].get(0).poll();
                             }
+
                             out.writeObject("keep");
                             out.flush();
                             Log.e("check", stage);
@@ -1223,6 +1230,10 @@ public class MainActivity extends AppCompatActivity {
             }
             if(flag==10){
                 stopPlaying();
+            }
+            if(flag==-5){
+                String m = "Failure -> Possibly there is not song with this name or there is not this publisher in system";
+                Toast.makeText(MainActivity.this, m, Toast.LENGTH_SHORT).show();
             }
 
                 /*while(true){

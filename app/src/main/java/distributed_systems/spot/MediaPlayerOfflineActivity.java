@@ -249,9 +249,16 @@ public class MediaPlayerOfflineActivity extends AppCompatActivity {
         initialized = true;
     }
 
+    @Override
+    protected void onStop(){
+        stopPlaying();
+        super.onStop();
+    }
+
 
     @Override
     public void onBackPressed() {
+        stopPlaying();
         Intent i = new Intent(getApplicationContext(), StartActivity.class);
         startActivityForResult(i, 0);
     }

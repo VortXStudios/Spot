@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -322,6 +323,7 @@ public class OfflineActivity extends AppCompatActivity {
         private ObjectOutputStream out;
         private ObjectInputStream in;
         private ProgressDialog progressDialog;
+        private ProgressDialog progressDialog2;
 
 
         @Override
@@ -339,7 +341,8 @@ public class OfflineActivity extends AppCompatActivity {
                 try {
                     this.setIp((String) params[0].take());
                     this.setPort(Integer.parseInt((String) params[0].take()));
-                    requestSocket = new Socket(ip, port);
+                    requestSocket = new Socket();
+                    requestSocket.connect(new InetSocketAddress(ip,port),60000);
                     out = new ObjectOutputStream(requestSocket.getOutputStream());
                     in = new ObjectInputStream(requestSocket.getInputStream());
                     Log.e("check", "connected");

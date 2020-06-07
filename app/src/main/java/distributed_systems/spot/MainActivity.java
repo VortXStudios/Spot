@@ -1,5 +1,6 @@
 package distributed_systems.spot;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -85,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView cover;
     private SearchView searchArtist;
     private SearchView searchSong;
-
+    private BlockingQueue<Value> chunksQueue;
 
 
 
@@ -116,8 +118,9 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         String ip = (String) getIntent().getStringExtra("ip");
         int port = (int) getIntent().getIntExtra("port",5000);
-        mp = null;
-        mpNext = null;
+        //stopPlaying();
+        //mp = null;
+        //mpNext = null;
         allTracks = new ArrayList<>();
         allTracksDuration = new ArrayList<>();
         isExit = false;
@@ -127,13 +130,17 @@ public class MainActivity extends AppCompatActivity {
         btn2.setVisibility(View.INVISIBLE);
         btn1.setClickable(false);
         btn2.setClickable(false);
+        refresh.setClickable(false);
+        refresh.setVisibility(View.INVISIBLE);
         disablePlayerUI();
         searchArtist.setVisibility(View.INVISIBLE);
+        searchArtist.setClickable(false);
         searchSong.setVisibility(View.INVISIBLE);
+        searchSong.setClickable(false);
         stage = "init";
         //final BlockingQueue<String> inputQueue = new LinkedBlockingDeque<>();
         inputQueue = new LinkedBlockingDeque<>();
-        final BlockingQueue<Value> chunksQueue = new LinkedBlockingDeque<>();
+        chunksQueue = new LinkedBlockingDeque<>();
         List<BlockingQueue> list = new ArrayList<>();
         inputQueue.add(ip);
         inputQueue.add(Integer.toString(port));
@@ -205,8 +212,14 @@ public class MainActivity extends AppCompatActivity {
                     viewSongs.setVisibility(View.INVISIBLE);
                     btn2.setClickable(false);
                     btn2.setVisibility(View.INVISIBLE);
+                    searchSong.setVisibility(View.INVISIBLE);
+                    searchSong.setClickable(false);
+                    stopPlaying();
                     disablePlayerUI();
                     inputQueue.put("");
+                    ArrayAdapter adapterArtist = (ArrayAdapter) viewArtists.getAdapter();
+                    adapterArtist.notifyDataSetChanged();
+                    viewArtists.clearChoices();
                     stage = "init";
                     inputQueue.clear();
                 } catch (InterruptedException e) {
@@ -291,6 +304,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         play.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 if(initialized){
@@ -324,12 +338,12 @@ public class MainActivity extends AppCompatActivity {
                         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mediaPlayer) {
-                                sTime2 += mp.getCurrentPosition();
-                                Log.e("check", String.valueOf(mp.getCurrentPosition()));
-                                Log.e("check", "1");
-                                pass++;
-                                playerNow = 1;
-                                if(mp!=null){
+                                if(mp!=null) {
+                                    sTime2 += mp.getCurrentPosition();
+                                    Log.e("check", String.valueOf(mp.getCurrentPosition()));
+                                    Log.e("check", "1");
+                                    pass++;
+                                    playerNow = 1;
                                     if(pos<0){
                                         Log.e("check", "pos");
                                         pos++;
@@ -774,8 +788,13 @@ public class MainActivity extends AppCompatActivity {
         backward.setClickable(true);
     }
 
+
+
+
+
     @Override
     protected void onStop(){
+
         isExit = true;
         Log.e("check","onDestroy");
         try {
@@ -816,6 +835,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         runner.cancel(true);
+        /*if(runner.getSocker()==null){
+            Log.e("check","wrong ip or port");
+        }*/
+        stopPlaying();
         Intent i = new Intent(getApplicationContext(), StartActivity.class);
         startActivityForResult(i, 0);
     }
@@ -832,7 +855,7 @@ public class MainActivity extends AppCompatActivity {
         private ObjectInputStream in;
         private String ip;
         private int port;
-
+        private ProgressDialog progressDialog;
 
         @Override
         protected String doInBackground(List<BlockingQueue>... params) {
@@ -849,7 +872,9 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     this.setIp((String) params[0].get(0).take());
                     this.setPort(Integer.parseInt((String) params[0].get(0).take()));
-                    requestSocket = new Socket(ip, port);
+                    requestSocket = new Socket();
+                    requestSocket.connect(new InetSocketAddress(ip,port),40000);
+                    requestSocket.setKeepAlive(true);
                     out = new ObjectOutputStream(requestSocket.getOutputStream());
                     in = new ObjectInputStream(requestSocket.getInputStream());
                     Log.e("check", "connected");
@@ -864,12 +889,20 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("check", "send1");
                             info = (Info) in.readObject();
                             Log.e("check", "take info");
+                            boolean notPub = false;
+                            int count =0;
                             while (info.getListOfBrokersInfo().keySet().isEmpty()) {
                                 if (isCancelled() || isExit) {
                                     Log.e("check", "cancel 1");
                                     inState = -1;
+                                    publishProgress(null,-3);
                                     break;
                                 }
+                                if(count==0) {
+                                    publishProgress(null, -2);
+                                }
+                                count++;
+                                notPub = true;
                                 out.writeObject(null);
                                 out.flush();
                                 info = (Info) in.readObject();
@@ -878,6 +911,9 @@ public class MainActivity extends AppCompatActivity {
                                 out.writeObject("exit");
                                 out.flush();
                                 break;
+                            }
+                            if(notPub){
+                                publishProgress(null,-3);
                             }
                             out.writeObject("ok");
                             out.flush();
@@ -1022,6 +1058,7 @@ public class MainActivity extends AppCompatActivity {
                                 while (true) {
                                     //Log.e("check","in loop");
                                     if (isCancelled() || isExit) {
+                                        //stopPlaying();
                                         Log.e("check", "cancel 3");
                                         inState = 4;
                                         break;
@@ -1032,6 +1069,7 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                     if (!stage.equalsIgnoreCase("chunks")) {
                                         //stopPlaying();
+                                        Log.e("check", "other stage");
                                         break;
                                     }
                                 }
@@ -1047,6 +1085,7 @@ public class MainActivity extends AppCompatActivity {
                             if (inState == 4) {
                                 out.writeObject("exit");
                                 out.flush();
+                                stopPlaying();
                                 break;
                             }
                             Log.e("check", stage);
@@ -1125,6 +1164,7 @@ public class MainActivity extends AppCompatActivity {
             int flag = (int) text[1];
             if (flag == 0) {
                 searchSong.setVisibility(View.INVISIBLE);
+                searchSong.setClickable(false);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);
@@ -1137,10 +1177,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("check","onProgressUpdate0");
                 ArrayAdapter adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.activity_listview, artists);
                 viewArtists.setAdapter(adapter);
+                refresh.setClickable(true);
+                refresh.setVisibility(View.VISIBLE);
                 viewArtists.setVisibility(View.VISIBLE);
                 btn1.setClickable(true);
                 btn1.setVisibility(View.VISIBLE);
                 searchArtist.setVisibility(View.VISIBLE);
+                searchArtist.setClickable(true);
             }
             if (flag == 1) {
                 Log.e("check","onProgressUpdate1");
@@ -1149,6 +1192,7 @@ public class MainActivity extends AppCompatActivity {
                 viewSongs.setAdapter(adapter);
                 viewSongs.setVisibility(View.VISIBLE);
                 searchSong.setVisibility(View.VISIBLE);
+                searchSong.setClickable(true);
                 btn2.setClickable(true);
                 btn2.setVisibility(View.VISIBLE);
                 disablePlayerUI();
@@ -1160,11 +1204,23 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this,"Not internet connection", Toast.LENGTH_LONG).show();
             }
             if(flag==3){
-                searchSong.setVisibility(View.VISIBLE);
+                searchSong.setVisibility(View.INVISIBLE);
+                searchSong.setClickable(false);
                 viewSongs.setVisibility(View.INVISIBLE);
                 btn2.setClickable(false);
                 btn2.setVisibility(View.INVISIBLE);
             }
+            if(flag==-2){
+                progressDialog = ProgressDialog.show(MainActivity.this,
+                        "Progress Dialog",
+                        "Waiting for a publisher...");
+            }
+            if(flag==-3){
+                if(progressDialog!=null) {
+                    progressDialog.dismiss();
+                }
+            }
+
                 /*while(true){
                     if(hasChoose)
                         break;
@@ -1245,7 +1301,9 @@ public class MainActivity extends AppCompatActivity {
             return this.connectedBroker;
         }
 
-
+        public Socket getSocker(){
+            return this.requestSocket;
+        }
 
         public int getPort() {
             return this.port;
@@ -1273,133 +1331,4 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    /*
-    private class AsyncTaskMediaPlayer extends AsyncTask<BlockingQueue, Object, String> {
-
-
-        @Override
-        protected String doInBackground(final BlockingQueue... params) {
-            try {
-                Value value = (Value) params[0].take();
-                System.out.println(value);
-                playMp3(value.getMusicFile().getMusicFileExtract(),0);
-                //mp.start();
-                //setTimer();
-                play.setImageResource(android.R.drawable.ic_media_pause);
-                value = (Value) params[0].take();
-                playMp3(value.getMusicFile().getMusicFileExtract(),1);
-                mp.setNextMediaPlayer(mpNext);
-                mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mediaPlayer) {
-                        if(mp!=null){
-                            Log.e("check","1");
-                            playerNow = 1;
-                            try {
-                                Value value = (Value) params[0].take();
-                                //!value.getFailure()
-                                if(!value.getFailure()) {
-                                    Log.e("check","2");
-                                    playNextChunk(value,0);
-                                    mpNext.setNextMediaPlayer(mp);
-                                }
-                                else{
-                                    Log.e("check","3");
-                                    play.setImageResource(android.R.drawable.ic_media_play);
-                                    endOfSong(0);
-                                }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                    }
-                });
-                mpNext.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mediaPlayer) {
-                        if(mpNext!=null){
-                            Log.e("check","1 next");
-                            playerNow = 0;
-                            try {
-                                Value value = (Value) params[0].take();
-                                //!value.getFailure()
-                                if(!value.getFailure()) {
-                                    Log.e("check","2 next");
-                                    playNextChunk(value,1);
-                                    mp.setNextMediaPlayer(mpNext);
-                                }
-                                else{
-                                    Log.e("check","3 next");
-                                    play.setImageResource(android.R.drawable.ic_media_play);
-                                    endOfSong(1);
-                                }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                    }
-                });
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            return null;
-        }
-        private void playNextChunk(Value value,int flag) {
-            if(flag==0) {
-                try {
-                    mp.stop();
-                    mp.reset();
-                    mp.setDataSource(new StreamMediaDataSource(value.getMusicFile().getMusicFileExtract()));
-                    mp.prepare();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            else{
-                try {
-                    mpNext.stop();
-                    mpNext.reset();
-                    mpNext.setDataSource(new StreamMediaDataSource(value.getMusicFile().getMusicFileExtract()));
-                    mpNext.prepare();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        private void playMp3(byte[] chunk,int flag) {
-            if(flag==0) {
-                try {
-                    mp.reset();
-                    mp.setDataSource(new StreamMediaDataSource(chunk));
-                    mp.prepareAsync();
-                    mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                        @Override
-                        public void onPrepared(MediaPlayer mediaPlayer) {
-                            mp.start();
-                        }
-                    });
-                    //mp.start();
-                } catch (Exception ex) {
-                    String s = ex.toString();
-                    ex.printStackTrace();
-                }
-            }
-            else{
-                try {
-                    mpNext.reset();
-                    mpNext.setDataSource(new StreamMediaDataSource(chunk));
-                    mpNext.prepare();
-                    //mpNext.start();
-                } catch (IOException ex) {
-                    String s = ex.toString();
-                    ex.printStackTrace();
-                }
-            }
-        }
-    }*/
 }

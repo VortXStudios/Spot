@@ -129,8 +129,10 @@ public class MainActivity extends AppCompatActivity {
         disablePlayerUI();
         searchArtist.setVisibility(View.INVISIBLE);
         searchArtist.setClickable(false);
+        searchArtist.setIconifiedByDefault(false);
         searchSong.setVisibility(View.INVISIBLE);
         searchSong.setClickable(false);
+        searchSong.setIconifiedByDefault(false);
         stage = "init";
         inputQueue = new LinkedBlockingDeque<>();
         chunksQueue = new LinkedBlockingDeque<>();
@@ -173,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        searchArtist.setIconifiedByDefault(false);
+
 
         searchArtist.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override

@@ -88,6 +88,8 @@ public class OfflineActivity extends AppCompatActivity {
         searchSong.setVisibility(View.INVISIBLE);
         searchArtist.setClickable(false);
         searchSong.setClickable(false);
+        searchArtist.setIconifiedByDefault(false);
+        searchSong.setIconifiedByDefault(false);
         stage = "init";
         inputQueue = new LinkedBlockingDeque<>();
         inputQueue.add(ip);

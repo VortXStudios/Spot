@@ -10,7 +10,7 @@
         android:theme="@style/AppTheme">
         <activity android:name=".StartActivity"
             android:configChanges="orientation"
-            android:screenOrientation="landscape" >
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,15 +19,15 @@
         </activity>
         <activity android:name=".MediaPlayerOfflineActivity"
             android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="landscape"/>
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".OfflineActivity"
             android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="landscape"/>
+            android:screenOrientation="portrait"/>
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|keyboardHidden"
-            android:screenOrientation="landscape">
+            android:screenOrientation="portrait">
         </activity>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />

@@ -397,7 +397,7 @@ public class OfflineActivity extends AppCompatActivity {
                             Log.e("check", "continue");
                             String[] cb = findCorrespondingBroker(artistName, info);
                             List<String> broker = register(cb, artistName);
-                            stage = "song";
+
                             Log.e("check", "continue2");
                             if (broker != null) {
                                 if (!(broker.get(0).equalsIgnoreCase("this"))) {
@@ -413,7 +413,7 @@ public class OfflineActivity extends AppCompatActivity {
                                     out.writeObject(stage);
                                     out.flush();
                                 }
-
+                                stage = "song";
                                 out.writeObject("Register");
                                 out.flush();
                                 //get a specific identification for this client

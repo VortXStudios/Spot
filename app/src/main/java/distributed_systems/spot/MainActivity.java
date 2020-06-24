@@ -257,6 +257,9 @@ public class MainActivity extends AppCompatActivity {
                 if(selectedSong!=null) {
 
                     stage="song";
+                    if(mp!=null || mpNext!=null){
+                        hdlr.removeCallbacks(UpdateSongTime);
+                    }
                     if (mp != null) {
                         try {
                             mp.release();
